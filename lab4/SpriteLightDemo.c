@@ -28,7 +28,7 @@ float group_dist_sqr = 20000.0; // squared distance for cohesion
 
 const float max_speed = 2.0;
 
-float avoidanceCalc(float input);
+float avoidanceCalc(float input, float distance);
 
 void SpriteBehavior() // Din kod!
 {
@@ -39,8 +39,9 @@ void SpriteBehavior() // Din kod!
 	SpritePtr sp, spC;
     int tot_sprites;
     float tot_h, tot_v, current_sheep_pos_v, current_sheep_pos_h, distance, group_h, group_v;
-    float speed_h, speed_v, tot_speed_h, tot_speed_v, group_length, normal_speed;
+    float speed_h, speed_v, tot_speed_h, tot_speed_v, group_length, normal_speed, speed_diff_h, speed_diff_v;
 
+    
     /*Cohesion+separation*/ 
     
     sp = gSpriteRoot;
@@ -70,21 +71,15 @@ void SpriteBehavior() // Din kod!
                 tot_v += spC->position.v;
                 
                 tot_speed_h += spC->speed.h; 
-                tot_speed_h += spC->speed.v;
+                tot_speed_v += spC->speed.v;
                 tot_sprites++; 
             }
 
-            /*
-            if (distance < separation_dist_sqr && distance > 0.0) {
-                speed_h += avoidanceCalc(sp->position.h - spC->position.h);
-                speed_v += avoidanceCalc(sp->position.v - spC->position.v);
-
-            }
-            */
 
             if ((distance < separation_dist_sqr) && (distance > 0)) {           
-                sp->speed.h += avoidanceCalc(sp->position.h - spC->position.h)*separation_constant; 
-                sp->speed.v += avoidanceCalc(sp->position.v - spC->position.v)*separation_constant; 
+                
+                sp->speed.h += avoidanceCalc(sp->position.h - spC->position.h, distance)*separation_constant; 
+                sp->speed.v += avoidanceCalc(sp->position.v - spC->position.v, distance)*separation_constant; 
             }
 
             spC = spC->next; 
@@ -99,18 +94,13 @@ void SpriteBehavior() // Din kod!
             speed_v = tot_speed_v / tot_sprites;
              
 
-            //printf("group coordinates are (%f,%f)\n",group_h, group_v);
-            //printf("sheep raw h addition = %f\n", (group_h - current_sheep_pos_h));
-            //printf("sheep modified h addition = %f\n\n", (group_h - current_sheep_pos_h)*cohesion_constant);
 
             sp->speed.h += (group_h - current_sheep_pos_h)*cohesion_constant;
-            //printf("speed diff for h is: %f\n", (group_h - current_sheep_pos_h)*cohesion_constant);
             sp->speed.h += speed_h * align_constant;
     
             sp->speed.v += (group_v - current_sheep_pos_v)*cohesion_constant;
-            sp->speed.v += speed_h * align_constant;
+            sp->speed.v += speed_v * align_constant;
 
-            //printf("speed diff for v is: %f\n", (group_v - current_sheep_pos_v)*cohesion_constant);
         }
 
         
@@ -126,10 +116,9 @@ void SpriteBehavior() // Din kod!
 }
 
 
-float avoidanceCalc(float input) {
+float avoidanceCalc(float input, float distance) {
 
-    //return ((input > 0.0) - (input < 0.0)) / (pow(input,2.0));  
-    return input;
+    return input / distance;  
 
 }
 
@@ -217,11 +206,11 @@ float vseparation_dist_sqr = 10000.0;
     	printf("cohesion_constant = %f\n", cohesion_constant);
     	break;
     case 'w':
-    	separation_constant += 0.001;
+    	separation_constant += 0.100;
     	printf("separation_constant = %f\n", separation_constant);
     	break;
     case 's':
-    	separation_constant -= 0.001;
+    	separation_constant -= 0.100;
     	printf("separation_constant = %f\n", separation_constant);
     	break;
     case 'e':
