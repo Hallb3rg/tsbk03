@@ -25,15 +25,17 @@ TextureData *sheepFace, *blackFace, *dogFace, *foodFace;
 
 
 
-float cohesion_constant = 0.0;
-float separation_constant = 0.0; //3.0/300.0;
-float align_constant = 0.0;
-float separation_dist_sqr = 2000.0;
+float cohesion_constant = 0.006;
+float separation_constant = 15.0; //3.0/300.0;
+float align_constant = 0.06;
+float separation_dist_sqr = 20000.0;
 float group_dist_sqr = 20000.0; // squared distance for cohesion
 
 const float max_speed = 2.0;
 
 float avoidanceCalc(float input, float distance);
+
+bool food_available = true;
 
 void SpriteBehavior() // Din kod!
 {
@@ -45,7 +47,7 @@ void SpriteBehavior() // Din kod!
     int tot_sprites;
     float tot_h, tot_v, current_sheep_pos_v, current_sheep_pos_h, distance, group_h, group_v;
     float speed_h, speed_v, tot_speed_h, tot_speed_v, normal_speed;
-
+    bool food_detected;
     
     /*Cohesion+separation*/ 
     
@@ -66,6 +68,7 @@ void SpriteBehavior() // Din kod!
         tot_speed_h = 0.0;
         tot_speed_v = 0.0;
         tot_sprites = 0.0;
+        food_detected = false;
 
         while (spC != NULL) {
             
@@ -76,17 +79,30 @@ void SpriteBehavior() // Din kod!
                 pow(current_sheep_pos_h - spC->position.h,2.0);
 
 
+
             if (distance < group_dist_sqr) {           
-                tot_h += spC->position.h;
-                tot_v += spC->position.v;
                 
-                tot_speed_h += spC->speed.h; 
-                tot_speed_v += spC->speed.v;
-                tot_sprites++; 
+                if (!food_detected && spC->face == foodFace && food_available) {
+                    tot_h = spC->position.h;
+                    tot_v = spC->position.v;
+                    food_detected = true;
+                    tot_sprites = 1;
+
+                } else if(!food_detected && spC->face != foodFace) {
+
+                    tot_h += spC->position.h;
+                    tot_v += spC->position.v;
+                    
+                    tot_speed_h += spC->speed.h; 
+                    tot_speed_v += spC->speed.v;  
+
+                    tot_sprites++; 
+
+                }          
             }
 
 
-            if ((distance < separation_dist_sqr) && (distance > 0) ) {//&& sp->face != blackFace) {           
+            if ((distance < separation_dist_sqr) && (distance > 0) && sp->face != foodFace && spC->face != foodFace) {//&& sp->face != blackFace) {           
                 
                 sp->speed.h += avoidanceCalc(sp->position.h - spC->position.h, distance)*separation_constant; 
                 sp->speed.v += avoidanceCalc(sp->position.v - spC->position.v, distance)*separation_constant; 
@@ -96,7 +112,7 @@ void SpriteBehavior() // Din kod!
         }
        
 
-        if (tot_sprites > 0 && sp->face !=blackFace) {
+        if (tot_sprites > 0 && sp->face == sheepFace) {
             group_h = tot_h/tot_sprites;
             group_v = tot_v/tot_sprites;
 
@@ -111,7 +127,7 @@ void SpriteBehavior() // Din kod!
             sp->speed.v += (group_v - current_sheep_pos_v)*cohesion_constant;
             sp->speed.v += speed_v * align_constant;
 
-        } else {
+        } else if (tot_sprites > 0 && sp->face==blackFace) {
 
             group_h = tot_h/tot_sprites;
             group_v = tot_v/tot_sprites;
@@ -134,34 +150,33 @@ void SpriteBehavior() // Din kod!
         
         //Normalize speed
         //
-    
-        if (sp->face != blackFace) {
+        
+        
+        if (sp->face == sheepFace) {
 
             normal_speed = sqrt(pow(sp->speed.h, 2.0) + pow(sp->speed.v,2.0));
-            sp->speed.h = (sp->speed.h/normal_speed) * max_speed;
-            sp->speed.v = (sp->speed.v/normal_speed) * max_speed;
-        } else {
+
+            if (normal_speed > max_speed) {
+
+                sp->speed.h = (sp->speed.h/normal_speed) * max_speed;
+                sp->speed.v = (sp->speed.v/normal_speed) * max_speed;
+
+            }
+        } else if (sp->face == blackFace) {
 
             normal_speed = sqrt(pow(sp->speed.h, 2.0) + pow(sp->speed.v,2.0));
-            sp->speed.h = (sp->speed.h/normal_speed) * max_speed*1.4; //(max_speed + max_speed/2-(random() % 100  / 100.0f)*max_speed);
-            sp->speed.v = (sp->speed.v/normal_speed) *max_speed*1.4;
+            
+            if (normal_speed > max_speed) {
+            
+                sp->speed.h = (sp->speed.h/normal_speed) * max_speed*1.4; //(max_speed + max_speed/2-(random() % 100  / 100.0f)*max_speed);
+                sp->speed.v = (sp->speed.v/normal_speed) *max_speed*1.4;
 
+            }
         } 
-
-
-
-        if (sp->face == blackFace) {
-
-            //sp->speed.h += max_speed/2-(random() % 100  / 100.0f)*max_speed ;
-            //sp->speed.v += max_speed/2-random(max_speed);
-
-
-            //printf("black sheep detected!\n");
-
-
-        }
+        
 
 		sp = sp->next;
+
 	} while (sp != NULL);
 }
 
@@ -193,7 +208,10 @@ void Display()
 	do
 	{
 		HandleSprite(sp); // Callback in a real engine
-		DrawSprite(sp);
+		if (food_available || !(sp->face==foodFace)) {
+        
+            DrawSprite(sp);
+        }
 		sp = sp->next;
 	} while (sp != NULL);
 	
@@ -246,6 +264,10 @@ float vseparation_dist_sqr = 10000.0;
     	printf("group_dist_sqr = %f\n", group_dist_sqr);
     	break;
 
+    case 'm':
+        food_available = !food_available;
+        printf("Toggling food, it is now %i\n", food_available);
+        break;
 
     case 'q':
     	cohesion_constant += 0.001;
@@ -284,9 +306,10 @@ void Init()
 	blackFace = GetFace("bilder/blackie.tga"); // Ett svart fr
 	dogFace = GetFace("bilder/dog.tga"); // En hund
 	foodFace = GetFace("bilder/mat.tga"); // Mat
-	
+    
+
     NewSprite(blackFace, 256, 256, 1, 1.6);
-	NewSprite(sheepFace, 700, 200, 1, 1.2);
+    NewSprite(sheepFace, 700, 200, 1, 1.2);
 	NewSprite(sheepFace, 200, 500, 1.6, -1);
 	NewSprite(sheepFace, 250, 200, -1.8, 0.3);
 	NewSprite(sheepFace, 50, 550, 1, 1);
@@ -304,6 +327,7 @@ void Init()
 	NewSprite(sheepFace, 300, 400, 1, 0.9);
 	NewSprite(sheepFace, 100, 50, 1.4, -1);
 	NewSprite(sheepFace, 450, 5, 1.2, 1.5);
+	NewSprite(foodFace,  400, 400, 0, 0);  
 }
 
 int main(int argc, char **argv)
