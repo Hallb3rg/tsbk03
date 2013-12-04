@@ -20,6 +20,11 @@
 
 // Lgg till egna globaler hr efter behov.
 
+
+TextureData *sheepFace, *blackFace, *dogFace, *foodFace;
+
+
+
 float cohesion_constant = 0.0;
 float separation_constant = 0.0; //3.0/300.0;
 float align_constant = 0.0;
@@ -39,7 +44,7 @@ void SpriteBehavior() // Din kod!
 	SpritePtr sp, spC;
     int tot_sprites;
     float tot_h, tot_v, current_sheep_pos_v, current_sheep_pos_h, distance, group_h, group_v;
-    float speed_h, speed_v, tot_speed_h, tot_speed_v, group_length, normal_speed, speed_diff_h, speed_diff_v;
+    float speed_h, speed_v, tot_speed_h, tot_speed_v, normal_speed;
 
     
     /*Cohesion+separation*/ 
@@ -61,7 +66,12 @@ void SpriteBehavior() // Din kod!
         tot_speed_h = 0.0;
         tot_speed_v = 0.0;
         tot_sprites = 0.0;
+
         while (spC != NULL) {
+            
+
+
+
             distance = pow(current_sheep_pos_v - spC->position.v,2.0) + 
                 pow(current_sheep_pos_h - spC->position.h,2.0);
 
@@ -76,17 +86,17 @@ void SpriteBehavior() // Din kod!
             }
 
 
-            if ((distance < separation_dist_sqr) && (distance > 0)) {           
+            if ((distance < separation_dist_sqr) && (distance > 0) ) {//&& sp->face != blackFace) {           
                 
                 sp->speed.h += avoidanceCalc(sp->position.h - spC->position.h, distance)*separation_constant; 
                 sp->speed.v += avoidanceCalc(sp->position.v - spC->position.v, distance)*separation_constant; 
             }
-
+            //printf("sheep face is: %i \n", spC->face);
             spC = spC->next; 
         }
        
 
-        if (tot_sprites > 0) {
+        if (tot_sprites > 0 && sp->face !=blackFace) {
             group_h = tot_h/tot_sprites;
             group_v = tot_v/tot_sprites;
 
@@ -101,15 +111,55 @@ void SpriteBehavior() // Din kod!
             sp->speed.v += (group_v - current_sheep_pos_v)*cohesion_constant;
             sp->speed.v += speed_v * align_constant;
 
+        } else {
+
+            group_h = tot_h/tot_sprites;
+            group_v = tot_v/tot_sprites;
+
+            speed_h = tot_speed_h / tot_sprites;
+            speed_v = tot_speed_v / tot_sprites;
+             
+
+
+            sp->speed.h += (group_h - current_sheep_pos_h)*cohesion_constant;
+            //sp->speed.h += speed_h * align_constant;
+    
+            sp->speed.v += (group_v - current_sheep_pos_v)*cohesion_constant;
+            //sp->speed.v += speed_v * align_constant;
+
+            //sp->speed.h += (random() % 100  / 100.0f)*max_speed/10;
+            //sp->speed.v += (random() % 100  / 100.0f)*max_speed/10;
         }
 
         
-        //Normalize speed 
-        normal_speed = sqrt(pow(sp->speed.h, 2.0) + pow(sp->speed.v,2.0));
-        sp->speed.h = (sp->speed.h/normal_speed) * max_speed;
-        sp->speed.v = (sp->speed.v/normal_speed) * max_speed;
+        //Normalize speed
+        //
+    
+        if (sp->face != blackFace) {
 
-        
+            normal_speed = sqrt(pow(sp->speed.h, 2.0) + pow(sp->speed.v,2.0));
+            sp->speed.h = (sp->speed.h/normal_speed) * max_speed;
+            sp->speed.v = (sp->speed.v/normal_speed) * max_speed;
+        } else {
+
+            normal_speed = sqrt(pow(sp->speed.h, 2.0) + pow(sp->speed.v,2.0));
+            sp->speed.h = (sp->speed.h/normal_speed) * max_speed*1.4; //(max_speed + max_speed/2-(random() % 100  / 100.0f)*max_speed);
+            sp->speed.v = (sp->speed.v/normal_speed) *max_speed*1.4;
+
+        } 
+
+
+
+        if (sp->face == blackFace) {
+
+            //sp->speed.h += max_speed/2-(random() % 100  / 100.0f)*max_speed ;
+            //sp->speed.v += max_speed/2-random(max_speed);
+
+
+            //printf("black sheep detected!\n");
+
+
+        }
 
 		sp = sp->next;
 	} while (sp != NULL);
@@ -227,9 +277,7 @@ float vseparation_dist_sqr = 10000.0;
 }
 
 void Init()
-{
-	TextureData *sheepFace, *blackFace, *dogFace, *foodFace;
-	
+{	
 	LoadTGATextureSimple("bilder/leaves.tga", &backgroundTexID); // Bakgrund
 	
 	sheepFace = GetFace("bilder/sheep.tga"); // Ett fr
@@ -237,6 +285,7 @@ void Init()
 	dogFace = GetFace("bilder/dog.tga"); // En hund
 	foodFace = GetFace("bilder/mat.tga"); // Mat
 	
+    NewSprite(blackFace, 256, 256, 1, 1.6);
 	NewSprite(sheepFace, 700, 200, 1, 1.2);
 	NewSprite(sheepFace, 200, 500, 1.6, -1);
 	NewSprite(sheepFace, 250, 200, -1.8, 0.3);
