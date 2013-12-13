@@ -83,12 +83,12 @@ Model *cylinderModel; // Collects all the above for drawing with glDrawElements
 mat4 modelViewMatrix, projectionMatrix;
 
 ///////////////////////////////////////////////////
-//		I N I T  B O N E  W E I G H T S
+//      I N I T  B O N E  W E I G H T S
 // Desc:  initierar benvikterna
 //
 void initBoneWeights(void)
 {
-    long	row, corner;
+    long    row, corner;
     int bone;
 
     // sätter värden till alla vertexar i meshen
@@ -120,23 +120,23 @@ void initBoneWeights(void)
             {
                 g_boneWeights[row][corner][bone] = boneWeights[bone] / totalBoneWeight;
 
-                //				printf("%d %d %d\n", bone, bone & 1, (bone+1) & 1);
+                //printf("%d %d %d\n", bone, bone & 1, (bone+1) & 1);
                 if (bone & 1) g_boneWeightVis[row][corner].s += g_boneWeights[row][corner][bone]; // Copy data to here to visualize your weights or anything else
                 if ((bone+1) & 1) g_boneWeightVis[row][corner].t += g_boneWeights[row][corner][bone]; // Copy data to here to visualize your weights
-                // 				printf("%d %f\n", bone, g_boneWeights[row][corner][bone]);
+                    //printf("%d %f\n", bone, g_boneWeights[row][corner][bone]);
             }
 
             // Visar vertexraderna
-            //			g_boneWeightVis[row][corner].s = row & 1; // Copy data to here to visualize your weights or anything else
-            //			g_boneWeightVis[row][corner].t = (row+1) & 1; // Copy data to here to visualize your weights
+            //          g_boneWeightVis[row][corner].s = row & 1; // Copy data to here to visualize your weights or anything else
+            //          g_boneWeightVis[row][corner].t = (row+1) & 1; // Copy data to here to visualize your weights
         }
 
     corner = 0;
     for (row = 0; row < kMaxRow; row++)
-        //		for (corner = 0; corner < kMaxCorners; corner++)
+        //      for (corner = 0; corner < kMaxCorners; corner++)
         for (bone = 0; bone < kMaxBones; bone++)
         {
-            printf("%d %d %f\n", row, bone, g_boneWeights[row][corner][bone]);
+            //              printf("%d %d %f\n", row, bone, g_boneWeights[row][corner][bone]);
         }
 
 }
@@ -144,12 +144,12 @@ void initBoneWeights(void)
 
 
 ///////////////////////////////////////////////////
-//		B U I L D  C Y L I N D E R
+//      B U I L D  C Y L I N D E R
 // Desc:  bygger upp cylindern 
 //
 void BuildCylinder()
 {
-    long	row, corner, cornerIndex;
+    long  row, corner, cornerIndex;
 
     // sätter värden till alla vetexar i meshen
     for (row = 0; row < kMaxRow; row++)
@@ -202,11 +202,11 @@ void BuildCylinder()
 
 
 //////////////////////////////////////
-//		B O N E
-// Desc:	en enkel ben-struct med en 
-//			pos-vektor och en rot-vektor 
-//			rot vektorn skulle lika gärna 
-//			kunna vara av 3x3 men VectorUtils2 har bara 4x4
+//      B O N E
+// Desc:    en enkel ben-struct med en 
+//          pos-vektor och en rot-vektor 
+//          rot vektorn skulle lika gärna 
+//          kunna vara av 3x3 men VectorUtils2 har bara 4x4
 typedef struct Bone
 {
     vec3 pos;
@@ -215,14 +215,14 @@ typedef struct Bone
 
 
 ///////////////////////////////////////
-//		G _ B O N E S
+//      G _ B O N E S
 // vårt skelett
 Bone g_bones[kMaxBones]; // Ursprungsdata, Šndra ej
 Bone g_bonesRes[kMaxBones]; // Animerat
 
 
 ///////////////////////////////////////////////////////
-//		S E T U P  B O N E S
+//      S E T U P  B O N E S
 //
 void setupBones(void)
 {
@@ -237,119 +237,93 @@ void setupBones(void)
 
 
 ///////////////////////////////////////////////////////
-//		D E F O R M  C Y L I N D E R 
+//      D E F O R M  C Y L I N D E R 
 //
-// Desc:	deformera cylinder meshen enligt skelettet
+// Desc:    deformera cylinder meshen enligt skelettet
 void DeformCylinder()
 {
-    //vec3 v[kMaxBones];
+    vec3 v[kMaxBones];
 
-    //float w[kMaxBones];
-    int row, corner, i, j, bone;
+    float w[kMaxBones];
 
-    mat4 bone_matrices[kMaxBones];
-
-    mat4 bone_inverse = IdentityMatrix(); // badly named, should be retralnsaltion.
-    mat4 bone_transform = IdentityMatrix();
-    mat4 bone_fnutt;
-    mat4 bone_inverse_2; // the real inverse
-
-    vec3 bone_vertex;
-    vec3 temp_bone_vertex;
-
-
+    int bone, rotation_index;
     
-    bone_transform = IdentityMatrix();//T(-g_bones[0].pos.x,-g_bones[0].pos.y,-g_bones[0].pos.z);
+    mat4 origin_transform = T(0.0,0,0);
 
-    bone_transform = Mult(bone_transform,g_bones[0].rot);
+    mat4 total_rotation = Mult(g_bonesRes[0].rot, origin_transform);
+    mat4 bone_matrix[kMaxBones];
 
-    bone_matrices[0] = bone_transform;
+    v[0] = MultVec3(total_rotation,g_bones[0].pos);
 
-
-
-
-
+    printf("bone%i = %f, %f, %f \n", 0, v[0].x, v[0].y, v[0].z);
 
 
-    for (i = 1; i < kMaxBones;i++) {
-
-        // TODO translate to origo with i-1
-
-        // TODO multiply all rotations from 0-i
-        //
-        // TODO multiply with bone_matrices[i-1]
-        //
-        // TODO 
+    bone_matrix[0] = total_rotation;
 
 
+    for (bone=1; bone < kMaxBones;bone++) {
+        
+        
+        total_rotation = T(-(g_bones[bone].pos.x-g_bones[bone-1].pos.x),
+                -(g_bones[bone].pos.y-g_bones[bone-1].pos.y),
+                -(g_bones[bone].pos.z-g_bones[bone-1].pos.z));
 
-    bone_transform =  T(-g_bones[i-1].pos.x,
-            -g_bones[i-1].pos.y,
-            -g_bones[i-1].pos.z);
-
-
-    for (j = 0; j < i; j++) {
-        bone_transform = Mult(
-                g_bones[j].rot,
-                bone_transform);
-    }
-
-    bone_matrices[i] = Mult(bone_transform, bone_matrices[i-1]);
+        for (rotation_index = bone; rotation_index > 0; rotation_index--) {
+            total_rotation = Mult(g_bonesRes[bone].rot, total_rotation);
+        }
+            
 
 
+        v[bone] = MultVec3(total_rotation,v[bone-1]);
 
-    
-        //bone_matrices[i] = IdentityMatrix();
+        bone_matrix[bone] = total_rotation;//Mult(T(g_bones[bone-1].pos.x, g_bones[bone-1].pos.y,0), total_rotation);
 
+        /*
+        bone_matrix[bone] = Mult(
+                T((g_bones[bone].pos.x-g_bones[bone-1].pos.x),
+                (g_bones[bone].pos.y-g_bones[bone-1].pos.y),
+                (g_bones[bone].pos.z-g_bones[bone-1].pos.z)),
+                 total_rotation);
+        */
+        printf("bone%i = %f, %f, %f\n", bone, v[bone].x, v[bone].y, v[bone].z);
 
 
     }
 
+
+        
+
+
     
+    int row, corner;
+
+    vec3 resulting_vert;
+
+    float current_weight;
+
+    mat4 temp_mat,temp_mat2, transform_matrix_with_weight;
+    
+    
+    //g_vertsRes
 
 
-
-
-
-
-
-
-
-
-
-    // för samtliga vertexar
+    // för samtliga vertexar 
     for (row = 0; row < kMaxRow; row++)
     {
         for (corner = 0; corner < kMaxCorners; corner++)
         {
 
 
-            g_vertsRes[row][corner] = SetVector(0.0,0.0,0.0);
+            g_vertsRes[row][corner] = SetVector(0.0f, 0.0f, 0.0f);
 
-            for (bone = 0; bone < kMaxCorners; bone++) {
+            //ikshu fixar: addera ihop korrekt.
 
-                temp_bone_vertex = MultVec3(
-                        bone_matrices[bone],
-                        g_vertsOrg[row][corner]);
-
-                bone_vertex =ScalarMult(
-                        temp_bone_vertex,
-                        g_boneWeights[row][corner][bone]);
-
-                g_vertsRes[row][corner] = SetVector(
-                        bone_vertex.x + g_vertsRes[row][corner].x,
-                        bone_vertex.y + g_vertsRes[row][corner].y,
-                        bone_vertex.z + g_vertsRes[row][corner].z);
-
-
-
+            for(bone = 0; bone < kMaxBones; bone++) {
+                // = ScalarMult(v[bone], g_boneWeights[row][corner][bone]);
+                g_vertsRes[row][corner] = VectorAdd(ScalarMult(MultVec3(bone_matrix[bone], g_vertsOrg[row][corner]), g_boneWeights[row][corner][bone]), g_vertsRes[row][corner]);
             }
 
-
-
-
-            //g_vertsRes[row][corner] = bone_vertex[0];
-
+            //g_vertsRes[row][corner] = VectorAdd(ScalarMult(MultVec3(bone_matrix[bone], g_vertsOrg[row][corner]), g_boneWeights[row][corner][bone]), g_vertsRes[row][corner]);
 
             // ---------=========  UPG 4 ===========---------
             // TODO: skinna meshen mot alla benen.
@@ -367,9 +341,9 @@ void DeformCylinder()
 
 
 /////////////////////////////////////////////
-//		A N I M A T E  B O N E S
-// Desc:	en väldigt enkel animation av skelettet
-//			vrider ben 1 i en sin(counter) 
+//      A N I M A T E  B O N E S
+// Desc:    en väldigt enkel animation av skelettet
+//          vrider ben 1 i en sin(counter) 
 void animateBones(void)
 {
     int bone;
@@ -384,14 +358,16 @@ void animateBones(void)
 
     g_bonesRes[0].rot = Rz(angle * angleScales[0]);
 
-    for (bone = 1; bone < kMaxBones; bone++)
+    for (bone = 1; bone < kMaxBones; bone++) {
         g_bonesRes[bone].rot = Rz(angle * angleScales[bone]);
+        //printf("Ben%i: %f, %f, %f \n", bone, g_bones[bone].pos.x, g_bones[bone].pos.y, g_bones[bone].pos.z);
+    }
 }
 
 
 ///////////////////////////////////////////////
-//		S E T  B O N E  R O T A T I O N
-// Desc:	sätter bone rotationen i vertex shadern
+//      S E T  B O N E  R O T A T I O N
+// Desc:    sätter bone rotationen i vertex shadern
 // (Ej obligatorisk.)
 void setBoneRotation(void)
 {
@@ -399,8 +375,8 @@ void setBoneRotation(void)
 
 
 ///////////////////////////////////////////////
-//		 S E T  B O N E  L O C A T I O N
-// Desc:	sätter bone positionen i vertex shadern
+//       S E T  B O N E  L O C A T I O N
+// Desc:    sätter bone positionen i vertex shadern
 // (Ej obligatorisk.)
 void setBoneLocation(void)
 {
@@ -408,8 +384,8 @@ void setBoneLocation(void)
 
 
 ///////////////////////////////////////////////
-//		 D R A W  C Y L I N D E R
-// Desc:	sätter bone positionen i vertex shadern
+//       D R A W  C Y L I N D E R
+// Desc:    sätter bone positionen i vertex shadern
 void DrawCylinder()
 {
     animateBones();
@@ -437,7 +413,7 @@ void DisplayWindow()
 {
     mat4 m;
 
-    glClearColor(0.4, 0.4, 0.2, 1);
+    glClearColor(0.4, 0.4, 0.8, 1);
     glClear(GL_COLOR_BUFFER_BIT+GL_DEPTH_BUFFER_BIT);
 
     m = Mult(projectionMatrix, modelViewMatrix);
@@ -456,7 +432,7 @@ void OnTimer(int value)
 
 void keyboardFunc( unsigned char key, int x, int y)
 {
-    if(key == 27)	//Esc
+    if(key == 27) //Esc
         exit(1);
 }
 
@@ -474,7 +450,7 @@ void reshape(GLsizei w, GLsizei h)
 }
 
 /////////////////////////////////////////
-//		M A I N
+//      M A I N
 //
 int main(int argc, char **argv)
 {
@@ -511,7 +487,7 @@ int main(int argc, char **argv)
             kMaxRow*kMaxCorners,
             kMaxg_poly * 3);
 
-    g_shader = loadShaders("shaderB.vert" , "shader.frag");
+    g_shader = loadShaders("shadercpu.vert" , "shader.frag");
 
     glutMainLoop();
 
